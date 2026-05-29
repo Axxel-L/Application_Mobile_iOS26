@@ -11,7 +11,7 @@ import SwiftUI
 struct CleKeLaApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Accueil()
         }
     }
 }
