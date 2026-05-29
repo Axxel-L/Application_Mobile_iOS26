@@ -4,7 +4,6 @@
 //
 //  Created by Axel Lalaut on 29/05/2026.
 //
-
 import SwiftUI
 
 struct Accueil: View {
@@ -33,8 +32,8 @@ struct Accueil: View {
 struct Note: View {
     let titre: String
     var body: some View {
-        Text(titre)
-            .navigationTitle("Mon plat préféré")
+        Text("Kaka")
+            .navigationTitle("Mon plat préféré : le carbonara")
     }
 }
 
