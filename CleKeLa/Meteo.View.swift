@@ -80,20 +80,13 @@ struct MeteoView: View {
 struct PrevisionsView: View {
     @EnvironmentObject var weatherVM: WeatherViewModel
     @State private var selectedPrevision: Prevision? = nil
-    @State private var showSheet = false
 
     var body: some View {
         ZStack {
             Color.blue.ignoresSafeArea()
 
             VStack {
-                Text("Prévisions 5 jours")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.top, 40)
-
-                if weatherVM.isLoading {
+                 if weatherVM.isLoading {
                     ProgressView()
                         .tint(.white)
                 } else {
@@ -103,7 +96,6 @@ struct PrevisionsView: View {
                                 PrevisionCard(prevision: prev)
                                     .onTapGesture {
                                         selectedPrevision = prev
-                                        showSheet = true
                                     }
                             }
                         }
@@ -114,12 +106,10 @@ struct PrevisionsView: View {
                 }
             }
         }
-        .sheet(isPresented: $showSheet) {
-            if let prev = selectedPrevision {
-                PrevisionDetailView(prevision: prev, cityName: weatherVM.cityName)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-            }
+        .sheet(item: $selectedPrevision) { prev in
+            PrevisionDetailView(prevision: prev, cityName: weatherVM.cityName)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -155,14 +145,14 @@ struct PrevisionCard: View {
         .padding(.horizontal, 20)
         .background(Color.white.opacity(0.15))
         .overlay(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 42)
                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
         )
-        .cornerRadius(20)
+        .cornerRadius(42)
     }
 }
 
-// MARK: Sheet détail d’une journée
+// MARK: Sheet détail
 struct PrevisionDetailView: View {
     let prevision: Prevision
     let cityName: String
@@ -177,14 +167,18 @@ struct PrevisionDetailView: View {
                     Button {
                         dismiss()
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title)
-                            .foregroundColor(.white.opacity(0.7))
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 26, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(14)
+                            .background(Color.white.opacity(0.15))
+                            .clipShape(Circle())
                     }
                     Spacer()
                 }
                 .padding(.horizontal)
-                .padding(.top, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 8)
 
                 Spacer()
 
@@ -202,7 +196,7 @@ struct PrevisionDetailView: View {
                     .font(.title3)
                     .foregroundColor(.white.opacity(0.8))
 
-                // Températures min/max
+                // Températures
                 HStack(spacing: 20) {
                     VStack {
                         Text("Min")
@@ -222,7 +216,7 @@ struct PrevisionDetailView: View {
                     }
                 }
 
-                // Vent uniquement (humidité non disponible en daily)
+                // Vent
                 HStack(spacing: 40) {
                     WeatherDetail(icon: "wind", value: prevision.wind)
                 }
