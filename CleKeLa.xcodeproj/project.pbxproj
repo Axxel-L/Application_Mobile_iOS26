@@ -29,9 +29,22 @@
 		90F2876D2FC994F600E7969A /* CleKeLaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CleKeLaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		90E29CBE2FCD8234001EE10E /* Exceptions for "CleKeLa" folder in "CleKeLa" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 90F287552FC994F400E7969A /* CleKeLa */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		90F287582FC994F400E7969A /* CleKeLa */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				90E29CBE2FCD8234001EE10E /* Exceptions for "CleKeLa" folder in "CleKeLa" target */,
+			);
 			path = CleKeLa;
 			sourceTree = "<group>";
 		};
@@ -398,6 +411,7 @@
 				DEVELOPMENT_TEAM = 6CR9YQH87Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CleKeLa/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "CleKeLa - Météo";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "";
@@ -434,6 +448,7 @@
 				DEVELOPMENT_TEAM = 6CR9YQH87Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CleKeLa/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "CleKeLa - Météo";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "";
