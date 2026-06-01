@@ -62,7 +62,7 @@ struct MeteoView: View {
                     HStack(spacing: 40) {
                         WeatherDetail(icon: "humidity.fill", value: weatherVM.humidity)
                         WeatherDetail(icon: "wind", value: weatherVM.wind)
-                        WeatherDetail(icon: "eye", value: weatherVM.visibility)
+                        WeatherDetail(icon: "sun.max.fill", value: "\(weatherVM.uvIndex)")
                     }
                     .foregroundColor(.white)
                     .padding()
@@ -84,9 +84,8 @@ struct PrevisionsView: View {
     var body: some View {
         ZStack {
             Color.blue.ignoresSafeArea()
-
             VStack {
-                 if weatherVM.isLoading {
+                if weatherVM.isLoading {
                     ProgressView()
                         .tint(.white)
                 } else {
@@ -101,6 +100,7 @@ struct PrevisionsView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 30)
+                        .padding(.top, 20)
                     }
                     .scrollIndicators(.hidden)
                 }
@@ -119,16 +119,16 @@ struct PrevisionCard: View {
     let prevision: Prevision
 
     var body: some View {
-        HStack(spacing: 16) {
-            Text(prevision.jour.uppercased())
+        HStack(spacing: 12) {
+            Text(prevision.jour.prefix(3))
                 .font(.system(.headline, design: .rounded))
                 .foregroundColor(.white)
-                .frame(width: 60, alignment: .leading)
+                .frame(width: 50, alignment: .leading)
 
             Image(systemName: prevision.icone)
-                .font(.system(size: 32))
+                .font(.system(size: 28))
                 .foregroundColor(.yellow)
-                .frame(width: 40)
+                .frame(width: 35)
 
             Spacer()
 
@@ -141,8 +141,8 @@ struct PrevisionCard: View {
                 .foregroundColor(.white)
                 .font(.headline)
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
         .background(Color.white.opacity(0.15))
         .overlay(
             RoundedRectangle(cornerRadius: 42)
@@ -152,7 +152,7 @@ struct PrevisionCard: View {
     }
 }
 
-// MARK: Sheet détail
+// MARK: Sheet détail d'une journée
 struct PrevisionDetailView: View {
     let prevision: Prevision
     let cityName: String
@@ -182,12 +182,11 @@ struct PrevisionDetailView: View {
 
                 Spacer()
 
-                // Icône et jour
                 Image(systemName: prevision.icone)
                     .font(.system(size: 70))
                     .foregroundColor(.white)
 
-                Text("\(prevision.jour.uppercased()) à \(cityName)")
+                Text("\(prevision.jour) à \(cityName)")
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
@@ -196,7 +195,6 @@ struct PrevisionDetailView: View {
                     .font(.title3)
                     .foregroundColor(.white.opacity(0.8))
 
-                // Températures
                 HStack(spacing: 20) {
                     VStack {
                         Text("Min")
@@ -216,9 +214,9 @@ struct PrevisionDetailView: View {
                     }
                 }
 
-                // Vent
                 HStack(spacing: 40) {
                     WeatherDetail(icon: "wind", value: prevision.wind)
+                    WeatherDetail(icon: "sun.max.fill", value: "\(prevision.uvIndex)")
                 }
                 .foregroundColor(.white)
 
@@ -336,5 +334,5 @@ struct Prevision: Identifiable {
     let tempMax: Int
     let weathercode: Int
     let wind: String
-    let humidity: String
+    let uvIndex: String
 }

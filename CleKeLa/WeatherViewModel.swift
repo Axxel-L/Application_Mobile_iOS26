@@ -10,7 +10,7 @@ class WeatherViewModel: ObservableObject {
     @Published var iconName = "cloud.sun.fill"
     @Published var wind = ""
     @Published var humidity = "--"
-    @Published var visibility = "--"
+    @Published var uvIndex = "--"
     @Published var dailyForecasts: [Prevision] = []
     @Published var isLoading = false
 
@@ -37,7 +37,6 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
-    // MARK: Reverse geocoding (nom de la ville depuis les coordonnées GPS)
     private func reverseGeocode(location: CLLocation) async -> String? {
         let geocoder = CLGeocoder()
         do {
@@ -51,7 +50,6 @@ class WeatherViewModel: ObservableObject {
         return nil
     }
 
-    // MARK: Météo pour la position actuelle
     private func loadWeatherForLocation(_ location: CLLocation) async {
         print("📍 Localisation reçue : \(location.coordinate.latitude), \(location.coordinate.longitude)")
         isLoading = true
@@ -68,7 +66,6 @@ class WeatherViewModel: ObservableObject {
         isLoading = false
     }
 
-    // MARK: Ville par défaut (Paris)
     private func loadDefaultCity() async {
         isLoading = true
         do {
@@ -81,7 +78,6 @@ class WeatherViewModel: ObservableObject {
         isLoading = false
     }
 
-    // MARK: Recherche manuelle d'une ville
     func searchCity(_ name: String) {
         Task {
             isLoading = true
@@ -96,7 +92,6 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
-    // MARK: Chargement des données météo
     func loadWeather(lat: Double, lon: Double, cityName: String) async throws {
         let response = try await service.fetchWeather(latitude: lat, longitude: lon)
 
@@ -107,6 +102,7 @@ class WeatherViewModel: ObservableObject {
         iconName = weatherIcon(for: current.weathercode)
         wind = "\(Int(current.windspeed.rounded())) km/h"
 
+        // Humidité
         if let hourly = response.hourly {
             let now = Date()
             let dateFormatter = DateFormatter()
@@ -114,24 +110,22 @@ class WeatherViewModel: ObservableObject {
             dateFormatter.timeZone = TimeZone(identifier: "Europe/Paris")
             let nowString = dateFormatter.string(from: now)
 
-            if let index = hourly.time.firstIndex(where: { $0.hasPrefix(nowString) }) {
-                if let humArray = hourly.relative_humidity_2m, index < humArray.count {
-                    humidity = "\(Int(humArray[index].rounded()))%"
-                } else {
-                    humidity = "--"
-                }
-                if let visArray = hourly.visibility, index < visArray.count {
-                    visibility = "\(Int(visArray[index].rounded() / 1000)) km"
-                } else {
-                    visibility = "--"
-                }
+            if let index = hourly.time.firstIndex(where: { $0.hasPrefix(nowString) }),
+               let humArray = hourly.relative_humidity_2m, index < humArray.count {
+                humidity = "\(Int(humArray[index].rounded()))%"
             } else {
                 humidity = "--"
-                visibility = "--"
             }
         } else {
             humidity = "--"
-            visibility = "--"
+        }
+
+        // Indice UV
+        if let daily = response.daily.uv_index_max, !daily.isEmpty {
+            let uv = daily[0]   // aujourd'hui
+            uvIndex = String(format: "%.1f", uv)
+        } else {
+            uvIndex = "--"
         }
 
         // Prévisions 5 jours
@@ -140,26 +134,28 @@ class WeatherViewModel: ObservableObject {
         let dayFormatter = DateFormatter()
         dayFormatter.dateFormat = "yyyy-MM-dd"
         let dayOfWeekFormatter = DateFormatter()
-        dayOfWeekFormatter.dateFormat = "EEE"
+        dayOfWeekFormatter.dateFormat = "EEEE"
         dayOfWeekFormatter.locale = Locale(identifier: "fr_FR")
 
         for i in 0..<min(daily.time.count, 5) {
             let dateString = daily.time[i]
             if let date = dayFormatter.date(from: dateString) {
-                let jour = dayOfWeekFormatter.string(from: date)
+                let jour = dayOfWeekFormatter.string(from: date).capitalized
                 let icone = weatherIcon(for: daily.weathercode[i])
                 let min = Int(daily.temperature_2m_min[i].rounded())
                 let max = Int(daily.temperature_2m_max[i].rounded())
                 let code = daily.weathercode[i]
                 let windVal = daily.wind_speed_10m_max?[i] ?? 0.0
                 let windStr = "\(Int(windVal.rounded())) km/h"
+                let uvVal = daily.uv_index_max?[i]
+                let uvStr = uvVal != nil ? "\(Int(uvVal!.rounded()))" : "--"
                 previsions.append(Prevision(jour: jour,
                                            icone: icone,
                                            tempMin: min,
                                            tempMax: max,
                                            weathercode: code,
                                            wind: windStr,
-                                           humidity: "--"))
+                                           uvIndex: uvStr))
             }
         }
         dailyForecasts = previsions
