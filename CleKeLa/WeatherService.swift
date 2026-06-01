@@ -15,8 +15,10 @@ class WeatherService {
             URLQueryItem(name: "current_weather", value: "true"),
             URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min,weathercode"),
             URLQueryItem(name: "timezone", value: "Europe/Paris"),
-            URLQueryItem(name: "forecast_days", value: "5") // 5 jours de prévisions
+            URLQueryItem(name: "forecast_days", value: "5"),
+            URLQueryItem(name: "current", value: "relative_humidity_2m,visibility")
         ]
+        
         let (data, _) = try await URLSession.shared.data(from: components.url!)
         let decoder = JSONDecoder()
         return try decoder.decode(OpenMeteoWeatherResponse.self, from: data)
@@ -34,7 +36,7 @@ class WeatherService {
         let decoder = JSONDecoder()
         let response = try decoder.decode(GeocodingResponse.self, from: data)
         guard let first = response.results.first else {
-            throw URLError(.cannotFindHost) // ou une erreur personnalisée
+            throw URLError(.cannotFindHost)
         }
         return first
     }

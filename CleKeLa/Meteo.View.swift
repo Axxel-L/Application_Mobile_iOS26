@@ -2,6 +2,8 @@ import SwiftUI
 
 // MARK: Navbar
 struct Accueil: View {
+    @StateObject private var weatherVM = WeatherViewModel()
+
     var body: some View {
         TabView {
             MeteoView()
@@ -9,13 +11,13 @@ struct Accueil: View {
                     Image(systemName: "cloud.sun.fill")
                     Text("Météo")
                 }
-            
+
             PrevisionsView()
                 .tabItem {
                     Image(systemName: "calendar")
                     Text("Prévisions")
                 }
-            
+
             RechercheView()
                 .tabItem {
                     Image(systemName: "magnifyingglass")
@@ -24,58 +26,58 @@ struct Accueil: View {
         }
         .accentColor(.white)
         .preferredColorScheme(.dark)
+        .environmentObject(weatherVM)
     }
 }
 
 // MARK: Météo actuelle
 struct MeteoView: View {
-    let cityName = "Paris"
-    let temperature = 23
-    let condition = "Partiellement nuageux"
-    let iconName = "cloud.sun.fill"
-    let humidity = "55%"
-    let wind = "15 km/h"
-    let visibility = "10 km"
-    
+    @EnvironmentObject var weatherVM: WeatherViewModel
+
     var body: some View {
         ZStack {
             Color.blue.ignoresSafeArea()
-            
-            VStack(spacing: 20) {
-                Spacer()
-                
-                Image(systemName: iconName)
-                    .font(.system(size: 80))
+
+            if weatherVM.isLoading {
+                ProgressView()
+                    .tint(.white)
+            } else {
+                VStack(spacing: 20) {
+                    Spacer()
+
+                    Image(systemName: weatherVM.iconName)
+                        .font(.system(size: 80))
+                        .foregroundColor(.white)
+
+                    Text(weatherVM.cityName)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+
+                    Text("\(Int(weatherVM.temperature.rounded()))°C")
+                        .font(.system(size: 60, design: .rounded))
+                        .fontWeight(.thin)
+                        .foregroundColor(.white)
+
+                    Text(weatherVM.conditionText)
+                        .font(.title2)
+                        .foregroundColor(.white.opacity(0.8))
+
+                    Spacer()
+
+                    HStack(spacing: 40) {
+                        WeatherDetail(icon: "humidity.fill", value: weatherVM.humidity)
+                        WeatherDetail(icon: "wind", value: weatherVM.wind)
+                        WeatherDetail(icon: "eye", value: weatherVM.visibility)
+                    }
                     .foregroundColor(.white)
-                
-                Text(cityName)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Text("\(temperature)°C")
-                    .font(.system(size: 60, design: .rounded))
-                    .fontWeight(.thin)
-                    .foregroundColor(.white)
-                
-                Text(condition)
-                    .font(.title2)
-                    .foregroundColor(.white.opacity(0.8))
-                
-                Spacer()
-                
-                HStack(spacing: 40) {
-                    WeatherDetail(icon: "humidity.fill", value: humidity)
-                    WeatherDetail(icon: "wind", value: wind)
-                    WeatherDetail(icon: "eye", value: visibility)
+                    .padding()
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(15)
+                    .padding(.horizontal)
+
+                    Spacer()
                 }
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.white.opacity(0.2))
-                .cornerRadius(15)
-                .padding(.horizontal)
-                
-                Spacer()
             }
         }
     }
@@ -83,49 +85,48 @@ struct MeteoView: View {
 
 // MARK: Prévisions
 struct PrevisionsView: View {
-    let previsions: [Prevision] = [
-        Prevision(jour: "Lun", icone: "sun.max.fill", tempMin: 18, tempMax: 26),
-        Prevision(jour: "Mar", icone: "cloud.sun.fill", tempMin: 16, tempMax: 24),
-        Prevision(jour: "Mer", icone: "cloud.rain.fill", tempMin: 14, tempMax: 20),
-        Prevision(jour: "Jeu", icone: "cloud.bolt.fill", tempMin: 13, tempMax: 19),
-        Prevision(jour: "Ven", icone: "sun.max.fill", tempMin: 17, tempMax: 27)
-    ]
-    
+    @EnvironmentObject var weatherVM: WeatherViewModel
+
     var body: some View {
         ZStack {
             Color.blue.ignoresSafeArea()
-            
+
             VStack {
                 Text("Prévisions 5 jours")
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .padding(.top, 40)
-                
-                List(previsions) { prev in
-                    HStack {
-                        Text(prev.jour)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(width: 50, alignment: .leading)
-                        
-                        Image(systemName: prev.icone)
-                            .foregroundColor(.yellow)
-                        
-                        Spacer()
-                        
-                        Text("\(prev.tempMin)°")
-                            .foregroundColor(.white.opacity(0.7))
-                        Text("–")
-                            .foregroundColor(.white.opacity(0.7))
-                        Text("\(prev.tempMax)°")
-                            .foregroundColor(.white)
-                            .fontWeight(.bold)
+
+                if weatherVM.isLoading {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    List(weatherVM.dailyForecasts) { prev in
+                        HStack {
+                            Text(prev.jour)
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(width: 50, alignment: .leading)
+
+                            Image(systemName: prev.icone)
+                                .foregroundColor(.yellow)
+
+                            Spacer()
+
+                            Text("\(prev.tempMin)°")
+                                .foregroundColor(.white.opacity(0.7))
+                            Text("–")
+                                .foregroundColor(.white.opacity(0.7))
+                            Text("\(prev.tempMax)°")
+                                .foregroundColor(.white)
+                                .fontWeight(.bold)
+                        }
+                        .listRowBackground(Color.white.opacity(0.1))
                     }
-                    .listRowBackground(Color.white.opacity(0.1))
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
                 }
-                .scrollContentBackground(.hidden)
-                .background(Color.clear)
             }
         }
     }
@@ -133,30 +134,45 @@ struct PrevisionsView: View {
 
 // MARK: Recherche
 struct RechercheView: View {
+    @EnvironmentObject var weatherVM: WeatherViewModel
     @State private var searchText = ""
-    
+
     var body: some View {
         ZStack {
             Color.blue.ignoresSafeArea()
-            
+
             VStack(spacing: 30) {
                 Text("Rechercher une ville")
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
                     .padding(.top, 50)
-                
+
                 HStack {
                     HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.white.opacity(0.7))
-                            .font(.system(size: 17))
-                        
+                        Button {
+                            if !searchText.isEmpty {
+                                weatherVM.searchCity(searchText)
+                                searchText = ""
+                                hideKeyboard()
+                            }
+                        } label: {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.white.opacity(0.7))
+                                .font(.system(size: 17))
+                        }
+
                         TextField("Rechercher une ville...", text: $searchText)
                             .font(.system(size: 17))
                             .foregroundColor(.white)
                             .submitLabel(.search)
-                        
+                            .onSubmit {
+                                if !searchText.isEmpty {
+                                    weatherVM.searchCity(searchText)
+                                    searchText = ""
+                                }
+                            }
+
                         if !searchText.isEmpty {
                             Button(action: { searchText = "" }) {
                                 Image(systemName: "xmark.circle.fill")
@@ -169,11 +185,11 @@ struct RechercheView: View {
                     .frame(height: 44)
                     .glassEffect()
                     .cornerRadius(12)
-                    
+
                     if !searchText.isEmpty {
                         Button("Annuler") {
                             searchText = ""
-                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            hideKeyboard()
                         }
                         .foregroundColor(.white)
                         .font(.system(size: 17))
@@ -182,10 +198,20 @@ struct RechercheView: View {
                 }
                 .animation(.easeInOut(duration: 0.2), value: searchText.isEmpty)
                 .padding(.horizontal)
-                
+
+                if weatherVM.isLoading {
+                    ProgressView()
+                        .tint(.white)
+                        .padding(.top, 20)
+                }
+
                 Spacer()
             }
         }
+    }
+
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 
@@ -193,7 +219,7 @@ struct RechercheView: View {
 struct WeatherDetail: View {
     let icon: String
     let value: String
-    
+
     var body: some View {
         VStack {
             Image(systemName: icon)

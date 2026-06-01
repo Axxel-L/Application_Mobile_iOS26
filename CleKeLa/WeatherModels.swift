@@ -1,10 +1,3 @@
-//
-//  WeatherViewModel.swift
-//  CleKeLa
-//
-//  Created by Axel Lalaut on 01/06/2026.
-//
-
 import Foundation
 
 // MARK: Géocodage
@@ -18,16 +11,22 @@ struct GeocodingResponse: Codable {
     let results: [GeocodingResult]
 }
 
-// MARK: Open‑Meteo
+// MARK: Météo Open‑Meteo
 struct OpenMeteoWeatherResponse: Codable {
     let current_weather: CurrentWeatherData
     let daily: DailyData
+    let current: CurrentData?
 }
 
 struct CurrentWeatherData: Codable {
     let temperature: Double
     let windspeed: Double
     let weathercode: Int
+}
+
+struct CurrentData: Codable {
+    let relative_humidity_2m: Double?
+    let visibility: Double?
 }
 
 struct DailyData: Codable {
@@ -37,7 +36,7 @@ struct DailyData: Codable {
     let weathercode: [Int]
 }
 
-// MARK: Helpers (icônes SF Symbols et texte)
+// MARK: Helpers (icônes et description)
 func weatherIcon(for code: Int) -> String {
     switch code {
     case 0: return "sun.max.fill"
