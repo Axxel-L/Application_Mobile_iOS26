@@ -13,14 +13,22 @@ class WeatherService {
             URLQueryItem(name: "latitude", value: String(latitude)),
             URLQueryItem(name: "longitude", value: String(longitude)),
             URLQueryItem(name: "current_weather", value: "true"),
-            URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min,weathercode,wind_speed_10m_max,relative_humidity_2m"),
+            URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min,weathercode,wind_speed_10m_max"),
             URLQueryItem(name: "timezone", value: "Europe/Paris"),
             URLQueryItem(name: "forecast_days", value: "5"),
             URLQueryItem(name: "current", value: "relative_humidity_2m,visibility")
         ]
+
         let (data, _) = try await URLSession.shared.data(from: components.url!)
         let decoder = JSONDecoder()
-        return try decoder.decode(OpenMeteoWeatherResponse.self, from: data)
+        do {
+            return try decoder.decode(OpenMeteoWeatherResponse.self, from: data)
+        } catch {
+            if let json = String(data: data, encoding: .utf8) {
+                print("🌐 JSON reçu : \(json)")
+            }
+            throw error
+        }
     }
 
     func geocode(city: String) async throws -> GeocodingResult {

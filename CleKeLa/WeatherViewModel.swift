@@ -37,7 +37,6 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
-    // Reverse geocoding pour obtenir le nom de la ville
     private func reverseGeocode(location: CLLocation) async -> String? {
         let geocoder = CLGeocoder()
         do {
@@ -131,16 +130,14 @@ class WeatherViewModel: ObservableObject {
                 let max = Int(daily.temperature_2m_max[i].rounded())
                 let code = daily.weathercode[i]
                 let windVal = daily.wind_speed_10m_max?[i] ?? 0.0
-                let humVal = daily.relative_humidity_2m?[i] ?? 0.0
                 let windStr = "\(Int(windVal.rounded())) km/h"
-                let humStr = "\(Int(humVal.rounded()))%"
                 previsions.append(Prevision(jour: jour,
                                            icone: icone,
                                            tempMin: min,
                                            tempMax: max,
                                            weathercode: code,
                                            wind: windStr,
-                                           humidity: humStr))
+                                           humidity: "--"))
             }
         }
         dailyForecasts = previsions

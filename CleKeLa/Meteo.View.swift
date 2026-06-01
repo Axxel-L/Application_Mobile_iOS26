@@ -162,7 +162,7 @@ struct PrevisionCard: View {
     }
 }
 
-// MARK: Sheet détail d'une journée
+// MARK: Sheet détail d’une journée
 struct PrevisionDetailView: View {
     let prevision: Prevision
     let cityName: String
@@ -172,7 +172,7 @@ struct PrevisionDetailView: View {
         ZStack {
             Color.blue.ignoresSafeArea()
 
-            VStack(spacing: 24) {
+            VStack(spacing: 4) {
                 HStack {
                     Button {
                         dismiss()
@@ -188,6 +188,7 @@ struct PrevisionDetailView: View {
 
                 Spacer()
 
+                // Icône et jour
                 Image(systemName: prevision.icone)
                     .font(.system(size: 70))
                     .foregroundColor(.white)
@@ -201,6 +202,7 @@ struct PrevisionDetailView: View {
                     .font(.title3)
                     .foregroundColor(.white.opacity(0.8))
 
+                // Températures min/max
                 HStack(spacing: 20) {
                     VStack {
                         Text("Min")
@@ -220,9 +222,9 @@ struct PrevisionDetailView: View {
                     }
                 }
 
+                // Vent uniquement (humidité non disponible en daily)
                 HStack(spacing: 40) {
                     WeatherDetail(icon: "wind", value: prevision.wind)
-                    WeatherDetail(icon: "humidity.fill", value: prevision.humidity)
                 }
                 .foregroundColor(.white)
 
@@ -316,7 +318,7 @@ struct RechercheView: View {
     }
 }
 
-// MARK: Composant détail
+// MARK: Composant météo
 struct WeatherDetail: View {
     let icon: String
     let value: String

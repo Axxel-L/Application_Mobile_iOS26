@@ -33,7 +33,6 @@ struct DailyData: Codable {
     let temperature_2m_min: [Double]
     let weathercode: [Int]
     let wind_speed_10m_max: [Double]?
-    let relative_humidity_2m: [Double]?
 }
 
 func weatherIcon(for code: Int) -> String {
