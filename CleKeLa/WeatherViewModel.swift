@@ -37,6 +37,7 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
+    // MARK: Reverse geocoding (nom de la ville depuis les coordonnées GPS)
     private func reverseGeocode(location: CLLocation) async -> String? {
         let geocoder = CLGeocoder()
         do {
@@ -50,6 +51,7 @@ class WeatherViewModel: ObservableObject {
         return nil
     }
 
+    // MARK: Météo pour la position actuelle
     private func loadWeatherForLocation(_ location: CLLocation) async {
         print("📍 Localisation reçue : \(location.coordinate.latitude), \(location.coordinate.longitude)")
         isLoading = true
@@ -66,6 +68,7 @@ class WeatherViewModel: ObservableObject {
         isLoading = false
     }
 
+    // MARK: Ville par défaut (Paris)
     private func loadDefaultCity() async {
         isLoading = true
         do {
@@ -78,6 +81,7 @@ class WeatherViewModel: ObservableObject {
         isLoading = false
     }
 
+    // MARK: Recherche manuelle d'une ville
     func searchCity(_ name: String) {
         Task {
             isLoading = true
@@ -92,6 +96,7 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
+    // MARK: Chargement des données météo
     func loadWeather(lat: Double, lon: Double, cityName: String) async throws {
         let response = try await service.fetchWeather(latitude: lat, longitude: lon)
 
@@ -102,17 +107,34 @@ class WeatherViewModel: ObservableObject {
         iconName = weatherIcon(for: current.weathercode)
         wind = "\(Int(current.windspeed.rounded())) km/h"
 
-        if let hum = response.current?.relative_humidity_2m {
-            humidity = "\(Int(hum.rounded()))%"
+        if let hourly = response.hourly {
+            let now = Date()
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:00"
+            dateFormatter.timeZone = TimeZone(identifier: "Europe/Paris")
+            let nowString = dateFormatter.string(from: now)
+
+            if let index = hourly.time.firstIndex(where: { $0.hasPrefix(nowString) }) {
+                if let humArray = hourly.relative_humidity_2m, index < humArray.count {
+                    humidity = "\(Int(humArray[index].rounded()))%"
+                } else {
+                    humidity = "--"
+                }
+                if let visArray = hourly.visibility, index < visArray.count {
+                    visibility = "\(Int(visArray[index].rounded() / 1000)) km"
+                } else {
+                    visibility = "--"
+                }
+            } else {
+                humidity = "--"
+                visibility = "--"
+            }
         } else {
             humidity = "--"
-        }
-        if let vis = response.current?.visibility {
-            visibility = "\(Int(vis.rounded() / 1000)) km"
-        } else {
             visibility = "--"
         }
 
+        // Prévisions 5 jours
         var previsions: [Prevision] = []
         let daily = response.daily
         let dayFormatter = DateFormatter()

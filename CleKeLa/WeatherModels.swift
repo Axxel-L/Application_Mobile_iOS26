@@ -13,7 +13,7 @@ struct GeocodingResponse: Codable {
 struct OpenMeteoWeatherResponse: Codable {
     let current_weather: CurrentWeatherData
     let daily: DailyData
-    let current: CurrentData?
+    let hourly: HourlyData?
 }
 
 struct CurrentWeatherData: Codable {
@@ -22,17 +22,18 @@ struct CurrentWeatherData: Codable {
     let weathercode: Int
 }
 
-struct CurrentData: Codable {
-    let relative_humidity_2m: Double?
-    let visibility: Double?
-}
-
 struct DailyData: Codable {
     let time: [String]
     let temperature_2m_max: [Double]
     let temperature_2m_min: [Double]
     let weathercode: [Int]
     let wind_speed_10m_max: [Double]?
+}
+
+struct HourlyData: Codable {
+    let time: [String]
+    let relative_humidity_2m: [Double]?
+    let visibility: [Double]?
 }
 
 func weatherIcon(for code: Int) -> String {
