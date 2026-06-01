@@ -44,27 +44,21 @@ struct MeteoView: View {
             } else {
                 VStack(spacing: 20) {
                     Spacer()
-
                     Image(systemName: weatherVM.iconName)
                         .font(.system(size: 80))
                         .foregroundColor(.white)
-
                     Text(weatherVM.cityName)
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
-
                     Text("\(Int(weatherVM.temperature.rounded()))°C")
                         .font(.system(size: 60, design: .rounded))
                         .fontWeight(.thin)
                         .foregroundColor(.white)
-
                     Text(weatherVM.conditionText)
                         .font(.title2)
                         .foregroundColor(.white.opacity(0.8))
-
                     Spacer()
-
                     HStack(spacing: 40) {
                         WeatherDetail(icon: "humidity.fill", value: weatherVM.humidity)
                         WeatherDetail(icon: "wind", value: weatherVM.wind)
@@ -75,7 +69,6 @@ struct MeteoView: View {
                     .background(Color.white.opacity(0.2))
                     .cornerRadius(15)
                     .padding(.horizontal)
-
                     Spacer()
                 }
             }
@@ -86,6 +79,8 @@ struct MeteoView: View {
 // MARK: Prévisions
 struct PrevisionsView: View {
     @EnvironmentObject var weatherVM: WeatherViewModel
+    @State private var selectedPrevision: Prevision? = nil
+    @State private var showSheet = false
 
     var body: some View {
         ZStack {
@@ -102,32 +97,138 @@ struct PrevisionsView: View {
                     ProgressView()
                         .tint(.white)
                 } else {
-                    List(weatherVM.dailyForecasts) { prev in
-                        HStack {
-                            Text(prev.jour)
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(width: 50, alignment: .leading)
-
-                            Image(systemName: prev.icone)
-                                .foregroundColor(.yellow)
-
-                            Spacer()
-
-                            Text("\(prev.tempMin)°")
-                                .foregroundColor(.white.opacity(0.7))
-                            Text("–")
-                                .foregroundColor(.white.opacity(0.7))
-                            Text("\(prev.tempMax)°")
-                                .foregroundColor(.white)
-                                .fontWeight(.bold)
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ForEach(weatherVM.dailyForecasts) { prev in
+                                PrevisionCard(prevision: prev)
+                                    .onTapGesture {
+                                        selectedPrevision = prev
+                                        showSheet = true
+                                    }
+                            }
                         }
-                        .listRowBackground(Color.white.opacity(0.1))
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 30)
                     }
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
+                    .scrollIndicators(.hidden)
                 }
             }
+        }
+        .sheet(isPresented: $showSheet) {
+            if let prev = selectedPrevision {
+                PrevisionDetailView(prevision: prev, cityName: weatherVM.cityName)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+        }
+    }
+}
+
+// MARK: Carte de prévision
+struct PrevisionCard: View {
+    let prevision: Prevision
+
+    var body: some View {
+        HStack(spacing: 16) {
+            Text(prevision.jour.uppercased())
+                .font(.system(.headline, design: .rounded))
+                .foregroundColor(.white)
+                .frame(width: 60, alignment: .leading)
+
+            Image(systemName: prevision.icone)
+                .font(.system(size: 32))
+                .foregroundColor(.yellow)
+                .frame(width: 40)
+
+            Spacer()
+
+            Text("\(prevision.tempMin)°")
+                .foregroundColor(.white.opacity(0.7))
+                .font(.subheadline)
+            Text("–")
+                .foregroundColor(.white.opacity(0.7))
+            Text("\(prevision.tempMax)°")
+                .foregroundColor(.white)
+                .font(.headline)
+        }
+        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .background(Color.white.opacity(0.15))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+        )
+        .cornerRadius(20)
+    }
+}
+
+// MARK: Sheet détail d'une journée
+struct PrevisionDetailView: View {
+    let prevision: Prevision
+    let cityName: String
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        ZStack {
+            Color.blue.ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.top, 20)
+
+                Spacer()
+
+                Image(systemName: prevision.icone)
+                    .font(.system(size: 70))
+                    .foregroundColor(.white)
+
+                Text("\(prevision.jour.uppercased()) à \(cityName)")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+
+                Text(weatherConditionText(for: prevision.weathercode))
+                    .font(.title3)
+                    .foregroundColor(.white.opacity(0.8))
+
+                HStack(spacing: 20) {
+                    VStack {
+                        Text("Min")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(prevision.tempMin)°")
+                            .font(.title)
+                            .foregroundColor(.white)
+                    }
+                    VStack {
+                        Text("Max")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(prevision.tempMax)°")
+                            .font(.title)
+                            .foregroundColor(.white)
+                    }
+                }
+
+                HStack(spacing: 40) {
+                    WeatherDetail(icon: "wind", value: prevision.wind)
+                    WeatherDetail(icon: "humidity.fill", value: prevision.humidity)
+                }
+                .foregroundColor(.white)
+
+                Spacer()
+            }
+            .multilineTextAlignment(.center)
         }
     }
 }
@@ -215,7 +316,7 @@ struct RechercheView: View {
     }
 }
 
-// MARK: Composant météo
+// MARK: Composant détail
 struct WeatherDetail: View {
     let icon: String
     let value: String
@@ -237,4 +338,7 @@ struct Prevision: Identifiable {
     let icone: String
     let tempMin: Int
     let tempMax: Int
+    let weathercode: Int
+    let wind: String
+    let humidity: String
 }

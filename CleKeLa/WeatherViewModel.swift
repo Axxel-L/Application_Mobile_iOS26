@@ -37,17 +37,29 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
-    // MARK: Météo locale automatique
+    // Reverse geocoding pour obtenir le nom de la ville
+    private func reverseGeocode(location: CLLocation) async -> String? {
+        let geocoder = CLGeocoder()
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            if let place = placemarks.first {
+                return place.locality ?? place.administrativeArea ?? place.name
+            }
+        } catch {
+            print("⚠️ Reverse geocoding échoué : \(error.localizedDescription)")
+        }
+        return nil
+    }
+
     private func loadWeatherForLocation(_ location: CLLocation) async {
         print("📍 Localisation reçue : \(location.coordinate.latitude), \(location.coordinate.longitude)")
         isLoading = true
+        let city = await reverseGeocode(location: location) ?? "Ma position"
         do {
-            try await loadWeather(
-                lat: location.coordinate.latitude,
-                lon: location.coordinate.longitude,
-                cityName: "Ma position"
-            )
-            print("✅ Météo locale chargée : \(cityName), \(temperature)°C")
+            try await loadWeather(lat: location.coordinate.latitude,
+                                  lon: location.coordinate.longitude,
+                                  cityName: city)
+            print("✅ Météo locale chargée : \(city), \(temperature)°C")
         } catch {
             print("❌ Erreur météo locale : \(error)")
             await loadDefaultCity()
@@ -67,18 +79,13 @@ class WeatherViewModel: ObservableObject {
         isLoading = false
     }
 
-    // MARK: Recherche manuelle
     func searchCity(_ name: String) {
         Task {
             isLoading = true
             do {
                 let result = try await service.geocode(city: name)
                 print("🔍 Ville trouvée : \(result.name) (\(result.latitude), \(result.longitude))")
-                try await loadWeather(
-                    lat: result.latitude,
-                    lon: result.longitude,
-                    cityName: result.name
-                )
+                try await loadWeather(lat: result.latitude, lon: result.longitude, cityName: result.name)
             } catch {
                 print("❌ Erreur lors de la recherche : \(error)")
             }
@@ -86,7 +93,6 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
-    // MARK: Chargement des données météo
     func loadWeather(lat: Double, lon: Double, cityName: String) async throws {
         let response = try await service.fetchWeather(latitude: lat, longitude: lon)
 
@@ -102,14 +108,12 @@ class WeatherViewModel: ObservableObject {
         } else {
             humidity = "--"
         }
-
         if let vis = response.current?.visibility {
             visibility = "\(Int(vis.rounded() / 1000)) km"
         } else {
             visibility = "--"
         }
 
-        // Prévisions
         var previsions: [Prevision] = []
         let daily = response.daily
         let dayFormatter = DateFormatter()
@@ -125,7 +129,18 @@ class WeatherViewModel: ObservableObject {
                 let icone = weatherIcon(for: daily.weathercode[i])
                 let min = Int(daily.temperature_2m_min[i].rounded())
                 let max = Int(daily.temperature_2m_max[i].rounded())
-                previsions.append(Prevision(jour: jour, icone: icone, tempMin: min, tempMax: max))
+                let code = daily.weathercode[i]
+                let windVal = daily.wind_speed_10m_max?[i] ?? 0.0
+                let humVal = daily.relative_humidity_2m?[i] ?? 0.0
+                let windStr = "\(Int(windVal.rounded())) km/h"
+                let humStr = "\(Int(humVal.rounded()))%"
+                previsions.append(Prevision(jour: jour,
+                                           icone: icone,
+                                           tempMin: min,
+                                           tempMax: max,
+                                           weathercode: code,
+                                           wind: windStr,
+                                           humidity: humStr))
             }
         }
         dailyForecasts = previsions

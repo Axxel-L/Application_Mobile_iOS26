@@ -1,6 +1,5 @@
 import Foundation
 
-// MARK: Géocodage
 struct GeocodingResult: Codable {
     let name: String
     let latitude: Double
@@ -11,7 +10,6 @@ struct GeocodingResponse: Codable {
     let results: [GeocodingResult]
 }
 
-// MARK: Météo Open‑Meteo
 struct OpenMeteoWeatherResponse: Codable {
     let current_weather: CurrentWeatherData
     let daily: DailyData
@@ -34,9 +32,10 @@ struct DailyData: Codable {
     let temperature_2m_max: [Double]
     let temperature_2m_min: [Double]
     let weathercode: [Int]
+    let wind_speed_10m_max: [Double]?
+    let relative_humidity_2m: [Double]?
 }
 
-// MARK: Helpers (icônes et description)
 func weatherIcon(for code: Int) -> String {
     switch code {
     case 0: return "sun.max.fill"
