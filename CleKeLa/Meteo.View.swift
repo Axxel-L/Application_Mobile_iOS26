@@ -22,15 +22,13 @@ struct Accueil: View {
                     Text("Recherche")
                 }
         }
-        .accentColor(.white) // Couleur des icônes
+        .accentColor(.white)
         .preferredColorScheme(.dark)
     }
 }
 
 // MARK: Météo actuelle
 struct MeteoView: View {
-
-    // Données brute
     let cityName = "Paris"
     let temperature = 23
     let condition = "Partiellement nuageux"
@@ -85,8 +83,6 @@ struct MeteoView: View {
 
 // MARK: Prévisions
 struct PrevisionsView: View {
-
-    // Données brute
     let previsions: [Prevision] = [
         Prevision(jour: "Lun", icone: "sun.max.fill", tempMin: 18, tempMax: 26),
         Prevision(jour: "Mar", icone: "cloud.sun.fill", tempMin: 16, tempMax: 24),
@@ -151,26 +147,41 @@ struct RechercheView: View {
                     .padding(.top, 50)
                 
                 HStack {
-                    TextField("Entrez un nom de ville...", text: $searchText)
-                        .padding()
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(12)
-                        .foregroundColor(.white)
-                        .accentColor(.white)
-                        .padding(.horizontal)
-                    
-                    Button(action: {
-                        print("Ville recherchée : \(searchText)")
-                    }) {
+                    HStack(spacing: 8) {
                         Image(systemName: "magnifyingglass")
-                            .font(.title2)
+                            .foregroundColor(.white.opacity(0.7))
+                            .font(.system(size: 17))
+                        
+                        TextField("Rechercher une ville...", text: $searchText)
+                            .font(.system(size: 17))
                             .foregroundColor(.white)
-                            .padding()
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Circle())
+                            .submitLabel(.search)
+                        
+                        if !searchText.isEmpty {
+                            Button(action: { searchText = "" }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.white.opacity(0.6))
+                                    .font(.system(size: 17))
+                            }
+                        }
                     }
-                    .padding(.trailing)
+                    .padding(.horizontal, 12)
+                    .frame(height: 44)
+                    .glassEffect()
+                    .cornerRadius(12)
+                    
+                    if !searchText.isEmpty {
+                        Button("Annuler") {
+                            searchText = ""
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        }
+                        .foregroundColor(.white)
+                        .font(.system(size: 17))
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
                 }
+                .animation(.easeInOut(duration: 0.2), value: searchText.isEmpty)
+                .padding(.horizontal)
                 
                 Spacer()
             }
