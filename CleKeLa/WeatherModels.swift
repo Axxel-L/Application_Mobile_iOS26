@@ -5,88 +5,66 @@
 //  Created by Axel Lalaut on 01/06/2026.
 //
 
-import SwiftUI
+import Foundation
 
-@MainActor
-class WeatherViewModel: ObservableObject {
-    @Published var cityName = "Paris"
-    @Published var temperature: Double = 0
-    @Published var conditionText = ""
-    @Published var iconName = "cloud.sun.fill"
-    @Published var wind = ""
-    @Published var dailyForecasts: [Prevision] = []
-    @Published var isLoading = false
+// MARK: Géocodage
+struct GeocodingResult: Codable {
+    let name: String
+    let latitude: Double
+    let longitude: Double
+}
 
-    private let service = WeatherService.shared
+struct GeocodingResponse: Codable {
+    let results: [GeocodingResult]
+}
 
-    // Recherche une ville
-    func searchCity(_ name: String) {
-        Task {
-            isLoading = true
-            do {
-                let result = try await service.geocode(city: name)
-                try await loadWeather(
-                    lat: result.latitude,
-                    lon: result.longitude,
-                    cityName: result.name
-                )
-            } catch {
-                print("Erreur lors de la recherche : \(error)")
-            }
-            isLoading = false
-        }
+// MARK: Open‑Meteo
+struct OpenMeteoWeatherResponse: Codable {
+    let current_weather: CurrentWeatherData
+    let daily: DailyData
+}
+
+struct CurrentWeatherData: Codable {
+    let temperature: Double
+    let windspeed: Double
+    let weathercode: Int
+}
+
+struct DailyData: Codable {
+    let time: [String]
+    let temperature_2m_max: [Double]
+    let temperature_2m_min: [Double]
+    let weathercode: [Int]
+}
+
+// MARK: Helpers (icônes SF Symbols et texte)
+func weatherIcon(for code: Int) -> String {
+    switch code {
+    case 0: return "sun.max.fill"
+    case 1, 2: return "cloud.sun.fill"
+    case 3: return "cloud.fill"
+    case 45, 48: return "cloud.fog.fill"
+    case 51, 53, 55: return "cloud.drizzle.fill"
+    case 61, 63, 65: return "cloud.rain.fill"
+    case 71, 73, 75, 77: return "cloud.snow.fill"
+    case 80, 81, 82: return "cloud.heavyrain.fill"
+    case 95, 96, 99: return "cloud.bolt.fill"
+    default: return "questionmark"
     }
+}
 
-    // Charge la météo pour une position donnée
-    func loadWeather(lat: Double, lon: Double, cityName: String) async throws {
-        let response = try await service.fetchWeather(latitude: lat, longitude: lon)
-
-        self.cityName = cityName
-        let current = response.current_weather
-        temperature = current.temperature
-        conditionText = weatherConditionText(for: current.weathercode)
-        iconName = weatherIcon(for: current.weathercode)
-        wind = "\(Int(current.windspeed.rounded())) km/h"
-
-        // Prévisions
-        var previsions: [Prevision] = []
-        let daily = response.daily
-        let dayFormatter = DateFormatter()
-        dayFormatter.dateFormat = "yyyy-MM-dd"
-        let dayOfWeekFormatter = DateFormatter()
-        dayOfWeekFormatter.dateFormat = "EEE"        dayOfWeekFormatter.locale = Locale(identifier: "fr_FR")
-
-        for i in 0..<min(daily.time.count, 5) {
-            let dateString = daily.time[i]
-            if let date = dayFormatter.date(from: dateString) {
-                let jour = dayOfWeekFormatter.string(from: date)
-                let icone = weatherIcon(for: daily.weathercode[i])
-                let min = Int(daily.temperature_2m_min[i].rounded())
-                let max = Int(daily.temperature_2m_max[i].rounded())
-                previsions.append(Prevision(jour: jour, icone: icone, tempMin: min, tempMax: max))
-            }
-        }
-        dailyForecasts = previsions
-    }
-
-    init() {
-        Task {
-            await loadDefaultCity()
-        }
-    }
-
-    private func loadDefaultCity() async {
-        isLoading = true
-        do {
-            let result = try await service.geocode(city: "Paris")
-            try await loadWeather(
-                lat: result.latitude,
-                lon: result.longitude,
-                cityName: result.name
-            )
-        } catch {
-            print("Erreur chargement défaut : \(error)")
-        }
-        isLoading = false
+func weatherConditionText(for code: Int) -> String {
+    switch code {
+    case 0: return "Ensoleillé"
+    case 1: return "Peu nuageux"
+    case 2: return "Partiellement nuageux"
+    case 3: return "Nuageux"
+    case 45, 48: return "Brouillard"
+    case 51, 53, 55: return "Bruine"
+    case 61, 63, 65: return "Pluie"
+    case 71, 73, 75, 77: return "Neige"
+    case 80, 81, 82: return "Forte pluie"
+    case 95, 96, 99: return "Orage"
+    default: return "Inconnu"
     }
 }
