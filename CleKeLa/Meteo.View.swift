@@ -178,7 +178,7 @@ struct RechercheView: View {
     }
 }
 
-// MARK: Composant détails météo
+// MARK: Composant météo
 struct WeatherDetail: View {
     let icon: String
     let value: String
