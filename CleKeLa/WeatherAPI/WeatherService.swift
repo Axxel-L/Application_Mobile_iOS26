@@ -19,9 +19,30 @@ class WeatherService {
             URLQueryItem(name: "forecast_days", value: "5")
         ]
 
-        let (data, _) = try await URLSession.shared.data(from: components.url!)
-        let decoder = JSONDecoder()
-        return try decoder.decode(OpenMeteoWeatherResponse.self, from: data)
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+        print("🌐 Appel API météo : \(url.absoluteString)")
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        if let httpResponse = response as? HTTPURLResponse {
+            print("Statut HTTP : \(httpResponse.statusCode)")
+            if httpResponse.statusCode != 200 {
+                let body = String(data: data, encoding: .utf8) ?? "aucun corps"
+                print("⚠️ Réponse brute : \(body)")
+                throw URLError(.badServerResponse)
+            }
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            return try decoder.decode(OpenMeteoWeatherResponse.self, from: data)
+        } catch {
+            let body = String(data: data, encoding: .utf8) ?? "inconnu"
+            print("❌ Erreur décodage JSON. Contenu reçu : \(body)")
+            throw error
+        }
     }
 
     func geocode(city: String) async throws -> GeocodingResult {
@@ -32,12 +53,31 @@ class WeatherService {
             URLQueryItem(name: "language", value: "fr"),
             URLQueryItem(name: "format", value: "json")
         ]
-        let (data, _) = try await URLSession.shared.data(from: components.url!)
-        let decoder = JSONDecoder()
-        let response = try decoder.decode(GeocodingResponse.self, from: data)
-        guard let first = response.results.first else {
-            throw URLError(.cannotFindHost)
+
+        guard let url = components.url else {
+            throw URLError(.badURL)
         }
-        return first
+        print("🌍 Géocodage : \(url.absoluteString)")
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            let body = String(data: data, encoding: .utf8) ?? "aucun corps"
+            print("⚠️ Géocodage échoué (statut \(httpResponse.statusCode)) : \(body)")
+            throw URLError(.badServerResponse)
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            let geocodingResponse = try decoder.decode(GeocodingResponse.self, from: data)
+            guard let first = geocodingResponse.results.first else {
+                throw URLError(.cannotFindHost)
+            }
+            return first
+        } catch {
+            let body = String(data: data, encoding: .utf8) ?? "inconnu"
+            print("❌ Erreur décodage géocodage : \(body)")
+            throw error
+        }
     }
 }

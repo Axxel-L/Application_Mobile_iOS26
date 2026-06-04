@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: Géocodage
+// MARK: Modèles pour le géocodage
 struct GeocodingResult: Codable {
     let name: String
     let latitude: Double
@@ -11,7 +11,7 @@ struct GeocodingResponse: Codable {
     let results: [GeocodingResult]
 }
 
-// MARK: Météo Open‑Meteo
+// MARK: Modèles météo Open‑Meteo
 struct OpenMeteoWeatherResponse: Codable {
     let current_weather: CurrentWeatherData
     let daily: DailyData
@@ -38,6 +38,19 @@ struct HourlyData: Codable {
     let relative_humidity_2m: [Double]?
 }
 
+// MARK: Prévision (utilisée dans l'interface)
+struct Prevision: Identifiable {
+    let id = UUID()
+    let jour: String
+    let icone: String
+    let tempMin: Int
+    let tempMax: Int
+    let weathercode: Int
+    let wind: String
+    let uvIndex: String
+}
+
+// MARK: Fonctions pour convertir les codes météo en Icon
 func weatherIcon(for code: Int) -> String {
     switch code {
     case 0: return "sun.max.fill"
@@ -53,6 +66,7 @@ func weatherIcon(for code: Int) -> String {
     }
 }
 
+// MARK: Fonctions pour convertir les codes météo en texte
 func weatherConditionText(for code: Int) -> String {
     switch code {
     case 0: return "Ensoleillé"

@@ -4,10 +4,10 @@ import CoreLocation
 
 @MainActor
 class WeatherViewModel: ObservableObject {
-    @Published var cityName = "Paris"
+    @Published var cityName = "NaN"
     @Published var temperature: Double = 0
     @Published var conditionText = ""
-    @Published var iconName = "cloud.sun.fill"
+    @Published var iconName = "error"
     @Published var wind = ""
     @Published var humidity = "--"
     @Published var uvIndex = "--"
@@ -23,9 +23,7 @@ class WeatherViewModel: ObservableObject {
             .compactMap { $0 }
             .first()
             .sink { [weak self] location in
-                Task {
-                    await self?.loadWeatherForLocation(location)
-                }
+                Task { await self?.loadWeatherForLocation(location) }
             }
             .store(in: &cancellables)
 
@@ -37,28 +35,14 @@ class WeatherViewModel: ObservableObject {
         }
     }
 
-    private func reverseGeocode(location: CLLocation) async -> String? {
-        let geocoder = CLGeocoder()
-        do {
-            let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            if let place = placemarks.first {
-                return place.locality ?? place.administrativeArea ?? place.name
-            }
-        } catch {
-            print("⚠️ Reverse geocoding échoué : \(error.localizedDescription)")
-        }
-        return nil
-    }
-
     private func loadWeatherForLocation(_ location: CLLocation) async {
-        print("📍 Localisation reçue : \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        print("📍 Localisation reçue")
         isLoading = true
         let city = await reverseGeocode(location: location) ?? "Ma position"
         do {
             try await loadWeather(lat: location.coordinate.latitude,
                                   lon: location.coordinate.longitude,
                                   cityName: city)
-            print("✅ Météo locale chargée : \(city), \(temperature)°C")
         } catch {
             print("❌ Erreur météo locale : \(error)")
             await loadDefaultCity()
@@ -70,10 +54,10 @@ class WeatherViewModel: ObservableObject {
         isLoading = true
         do {
             let result = try await service.geocode(city: "Paris")
-            print("🏙️ Ville par défaut : \(result.name)")
             try await loadWeather(lat: result.latitude, lon: result.longitude, cityName: result.name)
         } catch {
-            print("❌ Erreur chargement défaut : \(error)")
+            print("❌ Erreur météo locale : \(error.localizedDescription)")
+            await loadDefaultCity()
         }
         isLoading = false
     }
@@ -83,10 +67,10 @@ class WeatherViewModel: ObservableObject {
             isLoading = true
             do {
                 let result = try await service.geocode(city: name)
-                print("🔍 Ville trouvée : \(result.name) (\(result.latitude), \(result.longitude))")
                 try await loadWeather(lat: result.latitude, lon: result.longitude, cityName: result.name)
             } catch {
-                print("❌ Erreur lors de la recherche : \(error)")
+                print("❌ Erreur météo locale : \(error.localizedDescription)")
+                await loadDefaultCity()
             }
             isLoading = false
         }
@@ -102,13 +86,12 @@ class WeatherViewModel: ObservableObject {
         iconName = weatherIcon(for: current.weathercode)
         wind = "\(Int(current.windspeed.rounded())) km/h"
 
-        // Humidité
         if let hourly = response.hourly {
             let now = Date()
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:00"
-            dateFormatter.timeZone = TimeZone(identifier: "Europe/Paris")
-            let nowString = dateFormatter.string(from: now)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:00"
+            formatter.timeZone = TimeZone(identifier: "Europe/Paris")
+            let nowString = formatter.string(from: now)
 
             if let index = hourly.time.firstIndex(where: { $0.hasPrefix(nowString) }),
                let humArray = hourly.relative_humidity_2m, index < humArray.count {
@@ -116,19 +99,12 @@ class WeatherViewModel: ObservableObject {
             } else {
                 humidity = "--"
             }
-        } else {
-            humidity = "--"
         }
 
-        // Indice UV
-        if let daily = response.daily.uv_index_max, !daily.isEmpty {
-            let uv = daily[0]   // aujourd'hui
-            uvIndex = String(format: "%.1f", uv)
-        } else {
-            uvIndex = "--"
+        if let dailyUV = response.daily.uv_index_max, !dailyUV.isEmpty {
+            uvIndex = String(format: "%.1f", dailyUV[0])
         }
 
-        // Prévisions 5 jours
         var previsions: [Prevision] = []
         let daily = response.daily
         let dayFormatter = DateFormatter()
@@ -159,5 +135,16 @@ class WeatherViewModel: ObservableObject {
             }
         }
         dailyForecasts = previsions
+    }
+
+    private func reverseGeocode(location: CLLocation) async -> String? {
+        let geocoder = CLGeocoder()
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            return placemarks.first?.locality ?? placemarks.first?.name
+        } catch {
+            print("⚠️ Reverse geocoding échoué")
+            return nil
+        }
     }
 }
