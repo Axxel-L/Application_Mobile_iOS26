@@ -22,13 +22,11 @@ struct InfosView: View {
                         .foregroundColor(.white)
                         .padding(.top, 40).padding(.bottom, 8)
 
-                    // Application
                     InfoCard(title: "Application") {
                         InfoRow(label: "Version", value: "\(version) (build \(build))")
                         InfoRow(label: "Bundle",  value: Bundle.main.bundleIdentifier ?? "N/A")
                     }
 
-                    // API
                     InfoCard(title: "API Météo") {
                         InfoRow(label: "Service",  value: "Open-Meteo")
                         InfoRow(label: "Site web", value: "open-meteo.com")
@@ -50,7 +48,7 @@ struct InfosView: View {
     }
 }
 
-// MARK: - Composants
+// MARK: Composants
 private struct InfoCard<Content: View>: View {
     let title: String
     @ViewBuilder let content: () -> Content

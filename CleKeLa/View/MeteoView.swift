@@ -64,7 +64,7 @@ struct MeteoView: View {
     }
 }
 
-// MARK: - Sheet Apple Pay (simulation)
+// MARK: Sheet Apple Pay
 private struct ApplePaySheet: View {
     @Binding var isPresented: Bool
     @Binding var unlocked: Bool
@@ -77,7 +77,6 @@ private struct ApplePaySheet: View {
                 .background(.ultraThinMaterial)
 
             VStack(spacing: 24) {
-                // En-tête
                 HStack {
                     Text("Apple Pay").font(.headline)
                     Spacer()
@@ -87,7 +86,6 @@ private struct ApplePaySheet: View {
                     }
                 }
 
-                // Carte bancaire
                 RoundedRectangle(cornerRadius: 12)
                     .fill(LinearGradient(
                         colors: [.gray.opacity(0.4), .gray.opacity(0.2)],
@@ -106,7 +104,6 @@ private struct ApplePaySheet: View {
                         alignment: .topLeading
                     )
 
-                // Prix
                 VStack(spacing: 4) {
                     Text("Débloquer la température")
                         .font(.subheadline).foregroundColor(.secondary)
@@ -114,7 +111,6 @@ private struct ApplePaySheet: View {
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                 }
 
-                // Bouton payer
                 Button {
                     guard !paid else { return }
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
