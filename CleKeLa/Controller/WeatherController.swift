@@ -17,6 +17,7 @@ class WeatherController: ObservableObject {
     @Published var isLoading = false
     @Published var apiStatus = "Vérification..."
     @Published var apiOk = false
+    @Published var searchAlert: SearchAlert?
 
     // MARK: Services
     private let service = WeatherService.shared
@@ -51,6 +52,9 @@ class WeatherController: ObservableObject {
             isLoading = true
             if let r = try? await service.geocode(city: name) {
                 try? await loadWeather(lat: r.latitude, lon: r.longitude, city: r.name)
+                searchAlert = SearchAlert(success: true, city: r.name)
+            } else {
+                searchAlert = SearchAlert(success: false, city: name)
             }
             isLoading = false
         }
@@ -134,4 +138,11 @@ class WeatherController: ObservableObject {
         }
         return "Ma position"
     }
+}
+
+/// Utilisé pour afficher une alerte après une recherche.
+struct SearchAlert: Identifiable {
+    let id = UUID()
+    let success: Bool
+    let city: String
 }

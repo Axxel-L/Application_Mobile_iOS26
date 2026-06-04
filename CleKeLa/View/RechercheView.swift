@@ -53,6 +53,15 @@ struct RechercheView: View {
                 Spacer()
             }
         }
+        .alert(item: $ctrl.searchAlert) { alert in
+            Alert(
+                title: Text(alert.success ? "Ville trouvée" : "❌ Erreur"),
+                message: Text(alert.success
+                    ? "\(alert.city) a bien été sélectionnée."
+                    : "« \(alert.city) » est introuvable."),
+                dismissButton: .default(Text("OK"))
+            )
+        }
     }
 
     private func lancerRecherche() {
