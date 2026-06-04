@@ -24,6 +24,12 @@ struct CleKeLaApp: App {
                         Image(systemName: "magnifyingglass")
                         Text("Recherche")
                     }
+
+                InfosView()
+                    .tabItem {
+                        Image(systemName: "info.circle")
+                        Text("Infos")
+                    }
             }
             .environmentObject(controller)
             .preferredColorScheme(.dark)

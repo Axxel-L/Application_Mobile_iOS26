@@ -15,6 +15,8 @@ class WeatherController: ObservableObject {
     @Published var uvIndex = "--"
     @Published var dailyForecasts: [Prevision] = []
     @Published var isLoading = false
+    @Published var apiStatus = "Vérification..."
+    @Published var apiOk = false
 
     // MARK: Services
     private let service = WeatherService.shared
@@ -40,6 +42,7 @@ class WeatherController: ObservableObject {
             }
         }
         location.start()
+        checkAPI()
     }
 
     // MARK: Recherche d'une ville
@@ -50,6 +53,20 @@ class WeatherController: ObservableObject {
                 try? await loadWeather(lat: r.latitude, lon: r.longitude, city: r.name)
             }
             isLoading = false
+        }
+    }
+
+    // MARK: Vérifie l'état de l'API
+    func checkAPI() {
+        Task { @MainActor in
+            apiStatus = "Vérification..."
+            if let _ = try? await service.fetchWeather(latitude: 48.85, longitude: 2.35) {
+                apiStatus = "En ligne"
+                apiOk = true
+            } else {
+                apiStatus = "Hors ligne"
+                apiOk = false
+            }
         }
     }
 
